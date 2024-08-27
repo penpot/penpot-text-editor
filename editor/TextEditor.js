@@ -103,7 +103,7 @@ export class TextEditor extends EventTarget {
    */
   #setupElementProperties() {
     if (!this.#element.isContentEditable) {
-      this.#element.contentEditable = 'true';
+      this.#element.contentEditable = "true";
       // In `jsdom` it isn't enough to set the attribute 'contentEditable'
       // to `true` to work.
       // FIXME: Remove this when `jsdom` implements this interface.
@@ -150,7 +150,7 @@ export class TextEditor extends EventTarget {
       this.#createSelectionImposter();
     }
     this.dispatchEvent(new e.constructor(e.type, e));
-  }
+  };
 
   /**
    * Setups the elements, the properties and the
@@ -166,7 +166,10 @@ export class TextEditor extends EventTarget {
       document.getSelection(),
       options
     );
-    this.#selectionController.addEventListener("stylechange", this.#onStyleChange);
+    this.#selectionController.addEventListener(
+      "stylechange",
+      this.#onStyleChange
+    );
     addEventListeners(this.#element, this.#events);
   }
 
@@ -177,8 +180,10 @@ export class TextEditor extends EventTarget {
     // We only create a selection imposter if there's any selection
     // and if there is a selection imposter element to attach the
     // rects.
-    if (this.#selectionImposterElement
-    && !this.#selectionController.isCollapsed) {
+    if (
+      this.#selectionImposterElement &&
+      !this.#selectionController.isCollapsed
+    ) {
       const rects = this.#selectionController.range?.getClientRects();
       if (rects) {
         const rect = this.#selectionImposterElement.getBoundingClientRect();
@@ -223,8 +228,20 @@ export class TextEditor extends EventTarget {
    */
   #onPaste = (e) => clipboard.paste(e, this, this.#selectionController);
 
+  /**
+   * Event called when the user cuts some text from the
+   * editor.
+   *
+   * @param {ClipboardEvent} e
+   */
   #onCut = (e) => clipboard.cut(e, this, this.#selectionController);
 
+  /**
+   * Event called when the user copies some text from the
+   * editor.
+   *
+   * @param {ClipboardEvent} e
+   */
   #onCopy = (e) => clipboard.copy(e, this, this.#selectionController);
 
   /**
@@ -233,6 +250,10 @@ export class TextEditor extends EventTarget {
    * @param {InputEvent} e
    */
   #onBeforeInput = (e) => {
+    if (e.inputType === "historyUndo" || e.inputType === "historyRedo") {
+      return;
+    }
+
     if (!(e.inputType in commands)) {
       if (e.inputType !== "insertCompositionText") {
         e.preventDefault();
@@ -256,7 +277,11 @@ export class TextEditor extends EventTarget {
    * @param {InputEvent} e
    */
   #onInput = (e) => {
-    if  (e.inputType === "insertCompositionText") {
+    if (e.inputType === "historyUndo" || e.inputType === "historyRedo") {
+      return;
+    }
+
+    if (e.inputType === "insertCompositionText") {
       this.#notifyLayout(LayoutType.FULL, null);
     }
   };
@@ -377,7 +402,7 @@ export class TextEditor extends EventTarget {
    * @returns {HTMLSpanElement}
    */
   createInlineFromString(text, styles) {
-    if (text === '\n') {
+    if (text === "\n") {
       return createEmptyInline(styles);
     }
     return createInline(new Text(text), styles);
@@ -431,7 +456,10 @@ export class TextEditor extends EventTarget {
   dispose() {
     this.#changeController.removeEventListener("change", this.#onChange);
     this.#changeController.dispose();
-    this.#selectionController.removeEventListener("stylechange", this.#onStyleChange);
+    this.#selectionController.removeEventListener(
+      "stylechange",
+      this.#onStyleChange
+    );
     this.#selectionController.dispose();
     removeEventListeners(this.#element, this.#events);
     this.#element = null;
