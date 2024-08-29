@@ -265,7 +265,6 @@ export class TextEditor extends EventTarget {
       const command = commands[e.inputType];
       this.#selectionController.startMutation();
       command(e, this, this.#selectionController);
-      this.#changeController.notifyDebounced();
       const mutations = this.#selectionController.endMutation();
       this.#notifyLayout(LayoutType.FULL, mutations);
     }
