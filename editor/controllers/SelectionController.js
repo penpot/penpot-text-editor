@@ -1442,15 +1442,6 @@ export class SelectionController extends EventTarget {
    * @returns {void}
    */
   #applyStylesTo(startNode, startOffset, endNode, endOffset, newStyles) {
-    console.log(
-      "applyStylesTo",
-      startNode,
-      startOffset,
-      endNode,
-      endOffset,
-      newStyles
-    );
-
     // Applies the necessary styles to the root element.
     const root = this.#textEditor.root;
     setRootStyles(root, newStyles);
