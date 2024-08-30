@@ -456,11 +456,13 @@ export class TextEditor extends EventTarget {
   dispose() {
     this.#changeController.removeEventListener("change", this.#onChange);
     this.#changeController.dispose();
+    this.#changeController = null;
     this.#selectionController.removeEventListener(
       "stylechange",
       this.#onStyleChange
     );
     this.#selectionController.dispose();
+    this.#selectionController = null;
     removeEventListeners(this.#element, this.#events);
     this.#element = null;
     this.#root = null;

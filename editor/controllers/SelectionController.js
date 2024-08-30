@@ -220,6 +220,15 @@ export class SelectionController extends EventTarget {
   }
 
   /**
+   * Styles of the current inline.
+   *
+   * @type {CSSStyleDeclaration}
+   */
+  get currentStyle() {
+    return this.#currentStyle;
+  }
+
+  /**
    * Applies the default styles to the currentStyle
    * CSSStyleDeclaration.
    */
@@ -484,8 +493,7 @@ export class SelectionController extends EventTarget {
       // FIXME: Sometimes an exception is raised when the
       // focusOffset is greater than the node value length.
       // I don't know how that happens but this should fix it.
-      if (node.nodeType === Node.TEXT_NODE
-       && offset >= node.nodeValue.length) {
+      if (node.nodeType === Node.TEXT_NODE && offset >= node.nodeValue.length) {
         this.#selection.collapse(node, node.nodeValue.length);
       } else {
         this.#selection.collapse(node, offset);
@@ -1046,13 +1054,14 @@ export class SelectionController extends EventTarget {
       this.focusNode.remove();
     }
 
-    if (paragraph.childNodes.length === 1
-     && inline.childNodes.length === 0) {
+    if (paragraph.childNodes.length === 1 && inline.childNodes.length === 0) {
       const lineBreak = createLineBreak();
       inline.appendChild(lineBreak);
       return this.collapse(lineBreak, 0);
-    } else if (paragraph.childNodes.length > 1
-     && inline.childNodes.length === 0) {
+    } else if (
+      paragraph.childNodes.length > 1 &&
+      inline.childNodes.length === 0
+    ) {
       inline.remove();
       return this.collapse(nextTextNode, 0);
     }
@@ -1082,22 +1091,23 @@ export class SelectionController extends EventTarget {
     }
 
     const paragraph = this.focusParagraph;
-    if (!paragraph) throw new Error('Cannot find paragraph');
+    if (!paragraph) throw new Error("Cannot find paragraph");
     const inline = this.focusInline;
-    if (!inline) throw new Error('Cannot find inline');
+    if (!inline) throw new Error("Cannot find inline");
 
     const previousTextNode = this.#textNodeIterator.previousNode();
     if (this.focusNode.nodeValue === "") {
       this.focusNode.remove();
     }
 
-    if (paragraph.childNodes.length === 1
-     && inline.childNodes.length === 0) {
+    if (paragraph.childNodes.length === 1 && inline.childNodes.length === 0) {
       const lineBreak = createLineBreak();
       inline.appendChild(lineBreak);
       this.collapse(lineBreak, 0);
-    } else if (paragraph.childNodes.length > 1
-     && inline.childNodes.length === 0) {
+    } else if (
+      paragraph.childNodes.length > 1 &&
+      inline.childNodes.length === 0
+    ) {
       inline.remove();
       this.collapse(previousTextNode, getTextNodeLength(previousTextNode));
     }
@@ -1449,12 +1459,9 @@ export class SelectionController extends EventTarget {
     // If the startContainer and endContainer are the same
     // node, then we can apply styles directly to that
     // node.
-    if (startNode === endNode
-     && startNode.nodeType === Node.TEXT_NODE) {
+    if (startNode === endNode && startNode.nodeType === Node.TEXT_NODE) {
       // The styles are applied to the node completelly.
-      if (startOffset === 0
-       && endOffset === endNode.nodeValue.length) {
-
+      if (startOffset === 0 && endOffset === endNode.nodeValue.length) {
         const paragraph = this.startParagraph;
         const inline = this.startInline;
         setParagraphStyles(paragraph, newStyles);
@@ -1484,9 +1491,9 @@ export class SelectionController extends EventTarget {
       }
       return this.#notifyStyleChange();
 
-    // If the startContainer and endContainer are different
-    // then we need to iterate through those nodes to apply
-    // the styles.
+      // If the startContainer and endContainer are different
+      // then we need to iterate through those nodes to apply
+      // the styles.
     } else if (startNode !== endNode) {
       SafeGuard.start();
       const expectedEndNode = getClosestTextNode(endNode);
@@ -1500,14 +1507,17 @@ export class SelectionController extends EventTarget {
         // If we're at the start node and offset is greater than 0
         // then we should split the inline and apply styles to that
         // new inline.
-        if (this.#textNodeIterator.currentNode === startNode && startOffset > 0) {
+        if (
+          this.#textNodeIterator.currentNode === startNode &&
+          startOffset > 0
+        ) {
           const newInline = splitInline(inline, startOffset);
           setInlineStyles(newInline, newStyles);
           inline.after(newInline);
-        // If we're at the start node and offset is equal to 0
-        // or current node is different to start node and
-        // different to end node or we're at the end node
-        // and the offset is equalto the node length
+          // If we're at the start node and offset is equal to 0
+          // or current node is different to start node and
+          // different to end node or we're at the end node
+          // and the offset is equalto the node length
         } else if (
           (this.#textNodeIterator.currentNode === startNode &&
             startOffset === 0) ||
@@ -1518,7 +1528,7 @@ export class SelectionController extends EventTarget {
         ) {
           setInlineStyles(inline, newStyles);
 
-        // If we're at end node
+          // If we're at end node
         } else if (
           this.#textNodeIterator.currentNode === endNode &&
           endOffset < endNode.nodeValue.length
@@ -1529,8 +1539,7 @@ export class SelectionController extends EventTarget {
         }
 
         // We've reached the final node so we can return safely.
-        if (this.#textNodeIterator.currentNode === expectedEndNode)
-          return;
+        if (this.#textNodeIterator.currentNode === expectedEndNode) return;
 
         this.#textNodeIterator.nextNode();
       } while (this.#textNodeIterator.currentNode);
