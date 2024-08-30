@@ -29,7 +29,24 @@ import { isEmptyTextNode, isTextNode } from './TextNode';
 export const TAG = "DIV";
 export const TYPE = "paragraph";
 export const QUERY = `[data-itype="${TYPE}"]`;
-export const STYLES = [["text-align"], ["direction"]];
+export const STYLES = [
+  ["--typography-ref-id"],
+  ["--typography-ref-file"],
+  ["--font-id"],
+  ["--font-variant-id"],
+  ["--fills"],
+  ["font-variant"],
+  ["font-family"],
+  ["font-size", "px"],
+  ["font-weight"],
+  ["font-style"],
+  ["line-height"],
+  ["letter-spacing", "px"],
+  ["text-decoration"],
+  ["text-transform"],
+  ["text-align"],
+  ["direction"]
+];
 
 /**
  * Returns true if the passed node behaves like a paragraph.
