@@ -428,6 +428,7 @@ export class TextEditor extends EventTarget {
     this.#selectionController.applyStyles(styles);
     const mutations = this.#selectionController.endMutation();
     this.#notifyLayout(LayoutType.FULL, mutations);
+    this.#changeController.notifyImmediately();
     return this;
   }
 
