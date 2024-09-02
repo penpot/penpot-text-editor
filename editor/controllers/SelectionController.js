@@ -971,6 +971,7 @@ export class SelectionController extends EventTarget {
    */
   get isParagraphStart() {
     if (!this.isCollapsed) return false;
+    console.log('focus', this.focusNode, this.focusOffset)
     return isParagraphStart(this.focusNode, this.focusOffset);
   }
 
@@ -1395,7 +1396,11 @@ export class SelectionController extends EventTarget {
     const startNode = getClosestTextNode(this.#range.startContainer);
     const endNode = getClosestTextNode(this.#range.endContainer);
 
+    let previousNode = null;
     if (startNode !== endNode) {
+      this.#textNodeIterator.currentNode = startNode;
+      previousNode = this.#textNodeIterator.previousNode();
+
       this.#textNodeIterator.currentNode = startNode;
 
       SafeGuard.start();
@@ -1439,6 +1444,13 @@ export class SelectionController extends EventTarget {
       }
       this.collapse(singleParagraph.firstChild.firstChild, 0);
     }
+
+    if (isLineBreak(previousNode)) {
+      this.collapse(previousNode, 0);
+    } else if (isTextNode(previousNode)) {
+      this.collapse(previousNode, previousNode.nodeValue.length);
+    }
+    this.#range.collapse();
   }
 
   /**
