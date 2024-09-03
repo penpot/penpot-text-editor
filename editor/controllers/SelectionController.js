@@ -971,7 +971,6 @@ export class SelectionController extends EventTarget {
    */
   get isParagraphStart() {
     if (!this.isCollapsed) return false;
-    console.log('focus', this.focusNode, this.focusOffset)
     return isParagraphStart(this.focusNode, this.focusOffset);
   }
 
@@ -994,8 +993,10 @@ export class SelectionController extends EventTarget {
     const numParagraphs = fragment.children.length;
     console.log("insertPaste", numParagraphs);
     if (this.isParagraphStart) {
+      console.log("focusParagraph.before", fragment);
       this.focusParagraph.before(fragment);
     } else if (this.isParagraphEnd) {
+      console.log("focusParagraph.after", fragment);
       this.focusParagraph.after(fragment);
     } else {
       const newParagraph = splitParagraph(
@@ -1003,6 +1004,7 @@ export class SelectionController extends EventTarget {
         this.focusInline,
         this.focusOffset
       );
+      console.log("splitParagraph", newParagraph, fragment);
       this.focusParagraph.after(fragment, newParagraph);
     }
   }
@@ -1445,9 +1447,9 @@ export class SelectionController extends EventTarget {
       this.collapse(singleParagraph.firstChild.firstChild, 0);
     }
 
-    if (isLineBreak(previousNode)) {
+    if (previousNode && isLineBreak(previousNode)) {
       this.collapse(previousNode, 0);
-    } else if (isTextNode(previousNode)) {
+    } else if (previousNode && isTextNode(previousNode)) {
       this.collapse(previousNode, previousNode.nodeValue.length);
     }
     this.#range.collapse();

@@ -12,23 +12,25 @@ import {
   createParagraph,
   isLikeParagraph,
 } from "./Paragraph";
-import { isDisplayBlock } from "./Style";
+import { isDisplayBlock, normalizeStyles, getComputedStyle, mergeStyleDeclarations } from "./Style";
 
 /**
  * Maps any HTML into a valid content DOM element.
  *
  * @param {Document} document
  * @param {HTMLElement} root
+ * @param {CSSStyleDeclaration} [styleDefaults]
  * @returns {DocumentFragment}
  */
-export function mapContentFragmentFromDocument(document, root) {
+export function mapContentFragmentFromDocument(document, root, styleDefaults) {
   const nodeIterator = document.createNodeIterator(root, NodeFilter.SHOW_TEXT);
   const fragment = document.createDocumentFragment();
 
   let currentParagraph = null;
   let currentNode = nodeIterator.nextNode();
   while (currentNode) {
-    const parentStyle = window.getComputedStyle(currentNode.parentElement);
+    // We cannot call document.defaultView because it is `null`.
+    const parentStyle = normalizeStyles(mergeStyleDeclarations(styleDefaults, getComputedStyle(currentNode.parentElement)));
     if (
       isDisplayBlock(currentNode.parentElement.style) ||
       isDisplayBlock(parentStyle) ||
@@ -59,14 +61,16 @@ export function mapContentFragmentFromDocument(document, root) {
  * Maps any HTML into a valid content DOM element.
  *
  * @param {string} html
+ * @param {CSSStyleDeclaration} [styleDefaults]
  * @returns {DocumentFragment}
  */
-export function mapContentFragmentFromHTML(html) {
+export function mapContentFragmentFromHTML(html, styleDefaults) {
   const parser = new DOMParser();
   const htmlDocument = parser.parseFromString(html, "text/html");
   return mapContentFragmentFromDocument(
     htmlDocument,
-    htmlDocument.documentElement
+    htmlDocument.documentElement,
+    styleDefaults
   );
 }
 
@@ -74,16 +78,17 @@ export function mapContentFragmentFromHTML(html) {
  * Maps a plain text into a valid content DOM element.
  *
  * @param {string} string
+ * @param {CSSStyleDeclaration} [styleDefaults]
  * @returns {DocumentFragment}
  */
-export function mapContentFragmentFromString(string) {
+export function mapContentFragmentFromString(string, styleDefaults) {
   const lines = string.replace(/\r/g, "").split("\n");
   const fragment = document.createDocumentFragment();
   for (const line of lines) {
     if (line === "") {
-      fragment.appendChild(createEmptyParagraph());
+      fragment.appendChild(createEmptyParagraph(styleDefaults));
     } else {
-      fragment.appendChild(createParagraph([createInline(new Text(line))]));
+      fragment.appendChild(createParagraph([createInline(new Text(line), styleDefaults)], styleDefaults));
     }
   }
   return fragment;

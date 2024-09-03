@@ -6,6 +6,65 @@
  * Copyright (c) KALEIDOS INC
  */
 
+import { getFills } from "./Color";
+
+/**
+ * Merges two style declarations. `source` -> `target`.
+ *
+ * @param {CSSStyleDeclaration} target
+ * @param {CSSStyleDeclaration} source
+ * @returns {CSSStyleDeclaration}
+ */
+export function mergeStyleDeclarations(target, source) {
+  for (const styleName of source) {
+    target.setProperty(styleName, source.getPropertyValue(styleName));
+  }
+  return target
+}
+
+/**
+ * Computes the styles of an element the same way `window.getComputedStyle` does.
+ *
+ * @param {Element} element
+ * @returns {CSSStyleDeclaration}
+ */
+export function getComputedStyle(element) {
+  const inertElement = document.createElement("div");
+  let currentElement = element;
+  while (currentElement) {
+    for (const styleName of currentElement.style) {
+      const currentValue = inertElement.style.getPropertyValue(styleName);
+      if (currentValue) {
+        const priority = currentElement.style.getPropertyPriority(styleName);
+        if (priority === "important") {
+          const newValue = currentElement.style.getPropertyValue(styleName);
+          inertElement.style.setProperty(styleName, newValue);
+        }
+      } else {
+        inertElement.style.setProperty(
+          styleName,
+          currentElement.style.getPropertyValue(styleName)
+        );
+      }
+    }
+    currentElement = currentElement.parentElement;
+  }
+  return inertElement.style;
+}
+
+/**
+ * Normalizes style declaration.
+ *
+ * @param {CSSStyleDeclaration} styleDeclaration
+ * @returns {CSSStyleDeclaration}
+ */
+export function normalizeStyles(styleDeclaration) {
+  const color = styleDeclaration.getPropertyValue("color");
+  if (color) {
+    styleDeclaration.setProperty("--fills", getFills(color));
+  }
+  return styleDeclaration
+}
 /**
  * Sets a single style property value of an element.
  *
