@@ -55,13 +55,26 @@ export function getComputedStyle(element) {
 /**
  * Normalizes style declaration.
  *
+ * TODO: I think that this also needs to remove some "conflicting"
+ *       CSS properties like `font-family` or some CSS variables.
+ *
  * @param {CSSStyleDeclaration} styleDeclaration
  * @returns {CSSStyleDeclaration}
  */
 export function normalizeStyles(styleDeclaration) {
+  // If there's a color property, we should convert it to
+  // a --fills CSS variable property.
   const color = styleDeclaration.getPropertyValue("color");
   if (color) {
+    styleDeclaration.removeProperty("color");
     styleDeclaration.setProperty("--fills", getFills(color));
+  }
+  // If there's a font-family property and not a --font-id, then
+  // we remove the font-family because it will not work.
+  const fontFamily = styleDeclaration.getPropertyValue("font-family");
+  const fontId = styleDeclaration.getPropertyPriority("--font-id");
+  if (fontFamily && !fontId) {
+    styleDeclaration.removeProperty("font-family");
   }
   return styleDeclaration
 }
