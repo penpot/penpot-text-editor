@@ -26,11 +26,9 @@ export function paste(event, editor, selectionController) {
 
   let fragment = null;
   if (event.clipboardData.types.includes("text/html")) {
-    console.log("text/html");
     const html = event.clipboardData.getData("text/html");
     fragment = mapContentFragmentFromHTML(html, selectionController.currentStyle);
   } else if (event.clipboardData.types.includes("text/plain")) {
-    console.log("text/plain");
     const plain = event.clipboardData.getData("text/plain");
     fragment = mapContentFragmentFromString(plain, selectionController.currentStyle);
   }

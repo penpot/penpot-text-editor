@@ -265,7 +265,6 @@ export class TextEditor extends EventTarget {
     }
 
     if (e.inputType in commands) {
-      console.log(e.inputType)
       const command = commands[e.inputType];
       this.#selectionController.startMutation();
       command(e, this, this.#selectionController);

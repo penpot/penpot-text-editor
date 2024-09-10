@@ -835,7 +835,6 @@ describe("SelectionController", () => {
       "This is a test".length
     );
     selectionController.removeSelected();
-    console.log(textEditorMock.root.textContent);
     selectionController.removeBackwardParagraph();
     expect(textEditorMock.root).toBeInstanceOf(HTMLDivElement);
     expect(textEditorMock.root.children).toHaveLength(2);
