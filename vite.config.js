@@ -5,8 +5,8 @@ import { coverageConfigDefaults } from 'vitest/config'
 export default defineConfig({
   resolve: {
     alias: {
-      "~": resolve(".")
-    }
+      "~": resolve("."),
+    },
   },
   build: {
     minify: false,
@@ -20,12 +20,22 @@ export default defineConfig({
     terserOptions: {
       compress: true,
       mangle: true,
-    }
+    },
   },
   test: {
     coverage: {
       enabled: true,
-      exclude: ["main.js", "**/scripts/**", ...coverageConfigDefaults.exclude]
+      exclude: ["main.js", "**/scripts/**", ...coverageConfigDefaults.exclude],
+    },
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
+    environmentOptions: {
+      jsdom: {
+        resources: "usable",
+      },
     },
     browser: {
       name: "chromium",

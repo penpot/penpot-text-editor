@@ -16,7 +16,10 @@ import { getFills } from "./Color";
  * @returns {CSSStyleDeclaration}
  */
 export function mergeStyleDeclarations(target, source) {
-  for (const styleName of source) {
+  // This is better but it doesn't work in JSDOM
+  // for (const styleName of source) {
+  for (let index = 0; index < source.length; index++) {
+    const styleName = source.item(index);
     target.setProperty(styleName, source.getPropertyValue(styleName));
   }
   return target
@@ -32,7 +35,10 @@ export function getComputedStyle(element) {
   const inertElement = document.createElement("div");
   let currentElement = element;
   while (currentElement) {
-    for (const styleName of currentElement.style) {
+    // This is better but it doesn't work in JSDOM.
+    // for (const styleName of currentElement.style) {
+    for (let index = 0; index < currentElement.style.length; index++) {
+      const styleName = currentElement.style.item(index);
       const currentValue = inertElement.style.getPropertyValue(styleName);
       if (currentValue) {
         const priority = currentElement.style.getPropertyPriority(styleName);

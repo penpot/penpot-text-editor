@@ -37,6 +37,7 @@ import {
   removeForward,
   replaceWith,
   insertInto,
+  removeSlice,
 } from "~/editor/content/Text";
 import { getTextNodeLength, getClosestTextNode, isTextNode } from "~/editor/content/dom/TextNode";
 import TextNodeIterator from "~/editor/content/dom/TextNodeIterator";
@@ -430,12 +431,16 @@ export class SelectionController extends EventTarget {
     if (!this.#savedSelection) return false;
 
     if (this.#savedSelection.anchorNode && this.#savedSelection.focusNode) {
-      this.#selection.setBaseAndExtent(
-        this.#savedSelection.anchorNode,
-        this.#savedSelection.anchorOffset,
-        this.#savedSelection.focusNode,
-        this.#savedSelection.focusOffset
-      );
+      if (this.#savedSelection.anchorNode === this.#savedSelection.focusNode) {
+        this.#selection.setPosition(this.#savedSelection.focusNode, this.#savedSelection.focusOffset);
+      } else {
+        this.#selection.setBaseAndExtent(
+          this.#savedSelection.anchorNode,
+          this.#savedSelection.anchorOffset,
+          this.#savedSelection.focusNode,
+          this.#savedSelection.focusOffset
+        );
+      }
     }
     this.#savedSelection = null;
     return true;
@@ -486,19 +491,16 @@ export class SelectionController extends EventTarget {
    * @param {number} offset
    */
   collapse(node, offset) {
-    if (this.#savedSelection) {
-      this.#savedSelection.focusNode = node;
-      this.#savedSelection.focusOffset = offset;
-    } else {
-      // FIXME: Sometimes an exception is raised when the
-      // focusOffset is greater than the node value length.
-      // I don't know how that happens but this should fix it.
-      if (node.nodeType === Node.TEXT_NODE && offset >= node.nodeValue.length) {
-        this.#selection.collapse(node, node.nodeValue.length);
-      } else {
-        this.#selection.collapse(node, offset);
-      }
-    }
+    const nodeOffset = (node.nodeType === Node.TEXT_NODE && offset >= node.nodeValue.length)
+      ? node.nodeValue.length
+      : offset
+
+    return this.setSelection(
+      node,
+      nodeOffset,
+      node,
+      nodeOffset
+    );
   }
 
   /**
@@ -506,10 +508,16 @@ export class SelectionController extends EventTarget {
    *
    * @param {Node} anchorNode
    * @param {number} anchorOffset
-   * @param {Node} focusNode
-   * @param {number} focusOffset
+   * @param {Node} [focusNode=anchorNode]
+   * @param {number} [focusOffset=anchorOffset]
    */
-  setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset) {
+  setSelection(anchorNode, anchorOffset, focusNode = anchorNode, focusOffset = anchorOffset) {
+    if (!anchorNode.isConnected) {
+      throw new Error('Invalid anchorNode')
+    }
+    if (!focusNode.isConnected) {
+      throw new Error('Invalid focusNode')
+    }
     if (this.#savedSelection) {
       this.#savedSelection.isCollapsed =
         focusNode === anchorNode && anchorOffset === focusOffset;
@@ -532,12 +540,22 @@ export class SelectionController extends EventTarget {
         this.#savedSelection.range.endOffset = focusOffset;
       }
     } else {
-      this.#selection.setBaseAndExtent(
-        anchorNode,
-        anchorOffset,
-        focusNode,
-        focusOffset
-      );
+      this.#anchorNode = anchorNode;
+      this.#anchorOffset = anchorOffset;
+      if (anchorNode === focusNode) {
+        this.#focusNode = this.#anchorNode;
+        this.#focusOffset = this.#anchorOffset;
+        this.#selection.setPosition(anchorNode, anchorOffset);
+      } else {
+        this.#focusNode = focusNode;
+        this.#focusOffset = focusOffset;
+        this.#selection.setBaseAndExtent(
+          anchorNode,
+          anchorOffset,
+          focusNode,
+          focusOffset
+        );
+      }
     }
   }
 
@@ -668,6 +686,8 @@ export class SelectionController extends EventTarget {
     if (this.#savedSelection) {
       return this.#savedSelection.focusNode;
     }
+    if (!this.#focusNode)
+      console.trace("focusNode", this.#focusNode);
     return this.#focusNode;
   }
 
@@ -991,12 +1011,9 @@ export class SelectionController extends EventTarget {
    */
   insertPaste(fragment) {
     const numParagraphs = fragment.children.length;
-    console.log("insertPaste", numParagraphs);
     if (this.isParagraphStart) {
-      console.log("focusParagraph.before", fragment);
       this.focusParagraph.before(fragment);
     } else if (this.isParagraphEnd) {
-      console.log("focusParagraph.after", fragment);
       this.focusParagraph.after(fragment);
     } else {
       const newParagraph = splitParagraph(
@@ -1004,7 +1021,6 @@ export class SelectionController extends EventTarget {
         this.focusInline,
         this.focusOffset
       );
-      console.log("splitParagraph", newParagraph, fragment);
       this.focusParagraph.after(fragment, newParagraph);
     }
   }
@@ -1016,7 +1032,6 @@ export class SelectionController extends EventTarget {
    */
   replaceWithPaste(fragment) {
     const numParagraphs = fragment.children.length;
-    console.log("replaceWithPaste", numParagraphs);
     this.removeSelected();
     this.insertPaste(fragment);
   }
@@ -1103,17 +1118,18 @@ export class SelectionController extends EventTarget {
       this.focusNode.remove();
     }
 
-    if (paragraph.childNodes.length === 1 && inline.childNodes.length === 0) {
+    if (paragraph.children.length === 1 && inline.childNodes.length === 0) {
       const lineBreak = createLineBreak();
       inline.appendChild(lineBreak);
-      this.collapse(lineBreak, 0);
+      return this.collapse(lineBreak, 0);
     } else if (
-      paragraph.childNodes.length > 1 &&
+      paragraph.children.length > 1 &&
       inline.childNodes.length === 0
     ) {
       inline.remove();
-      this.collapse(previousTextNode, getTextNodeLength(previousTextNode));
+      return this.collapse(previousTextNode, getTextNodeLength(previousTextNode));
     }
+
     return this.collapse(this.focusNode, this.focusOffset - 1);
   }
 
@@ -1128,8 +1144,8 @@ export class SelectionController extends EventTarget {
       this.focusOffset,
       newText
     );
-    this.collapse(this.focusNode, this.focusOffset + newText.length);
     this.#mutations.update(this.focusInline);
+    return this.collapse(this.focusNode, this.focusOffset + newText.length);
   }
 
   /**
@@ -1146,8 +1162,8 @@ export class SelectionController extends EventTarget {
       endOffset,
       newText
     );
-    this.collapse(this.focusNode, startOffset + newText.length);
     this.#mutations.update(this.focusInline);
+    return this.collapse(this.focusNode, startOffset + newText.length);
   }
 
   /**
@@ -1170,11 +1186,10 @@ export class SelectionController extends EventTarget {
       currentParagraph.replaceChildren(
         createInline(newTextNode, this.anchorInline.style)
       );
-      this.collapse(newTextNode, newTextNode.nodeValue.length);
-      return;
+      return this.collapse(newTextNode, newTextNode.nodeValue.length);
     }
 
-    this.#range.deleteContents();
+    this.removeSelected();
 
     this.focusNode.nodeValue = insertInto(
       this.focusNode.nodeValue,
@@ -1182,28 +1197,22 @@ export class SelectionController extends EventTarget {
       newText
     );
 
-    for (const child of currentParagraph.children) {
-      if (child.textContent === "") {
-        child.remove();
-      }
-    }
-
     // FIXME: I'm not sure if we should merge inlines when they share the same styles.
     // For example: if we have > 2 inlines and the start inline and the end inline
     // share the same styles, maybe we should merge them?
     // mergeInlines(startInline, endInline);
-    this.collapse(this.focusNode, this.focusOffset + newText.length);
+    return this.collapse(this.focusNode, this.focusOffset + newText.length);
   }
 
   /**
    * Replaces paragraphs with text.
    *
-   * @param {*} newText
+   * @param {string} newText
    */
   replaceParagraphs(newText) {
     const currentParagraph = this.focusParagraph;
 
-    this.#range.deleteContents();
+    this.removeSelected();
 
     this.focusNode.nodeValue = insertInto(
       this.focusNode.nodeValue,
@@ -1225,9 +1234,9 @@ export class SelectionController extends EventTarget {
     const currentParagraph = this.focusParagraph;
     const newParagraph = createEmptyParagraph(this.#currentStyle);
     currentParagraph.after(newParagraph);
-    this.collapse(newParagraph.firstChild.firstChild, 0);
     this.#mutations.update(currentParagraph);
     this.#mutations.add(newParagraph);
+    return this.collapse(newParagraph.firstChild.firstChild, 0);
   }
 
   /**
@@ -1239,6 +1248,7 @@ export class SelectionController extends EventTarget {
     currentParagraph.before(newParagraph);
     this.#mutations.update(currentParagraph);
     this.#mutations.add(newParagraph);
+    return this.collapse(currentParagraph.firstChild.firstChild, 0);
   }
 
   /**
@@ -1252,9 +1262,9 @@ export class SelectionController extends EventTarget {
       this.#focusOffset
     );
     this.focusParagraph.after(newParagraph);
-    this.collapse(newParagraph.firstChild.firstChild, 0);
     this.#mutations.update(currentParagraph);
     this.#mutations.add(newParagraph);
+    return this.collapse(newParagraph.firstChild.firstChild, 0);
   }
 
   /**
@@ -1288,13 +1298,15 @@ export class SelectionController extends EventTarget {
 
     this.#mutations.update(currentParagraph);
     this.#mutations.add(newParagraph);
+
+    // FIXME: Missing collapse?
   }
 
   /**
    * Removes a paragraph in backward direction.
    */
   removeBackwardParagraph() {
-    const previousParagraph = this.focusParagraph.previousSibling;
+    const previousParagraph = this.focusParagraph.previousElementSibling;
     if (!previousParagraph) {
       return;
     }
@@ -1307,8 +1319,8 @@ export class SelectionController extends EventTarget {
     const previousOffset = isLineBreak(previousInline.firstChild)
       ? 0
       : previousInline.firstChild.nodeValue.length;
-    this.collapse(previousInline.firstChild, previousOffset);
     this.#mutations.remove(paragraphToBeRemoved);
+    return this.collapse(previousInline.firstChild, previousOffset);
   }
 
   /**
@@ -1329,9 +1341,9 @@ export class SelectionController extends EventTarget {
     } else {
       mergeParagraphs(previousParagraph, currentParagraph);
     }
-    this.collapse(previousInline.firstChild, previousOffset);
     this.#mutations.remove(currentParagraph);
     this.#mutations.update(previousParagraph);
+    return this.collapse(previousInline.firstChild, previousOffset);
   }
 
   /**
@@ -1346,6 +1358,8 @@ export class SelectionController extends EventTarget {
     mergeParagraphs(this.focusParagraph, nextParagraph);
     this.#mutations.update(currentParagraph);
     this.#mutations.remove(nextParagraph);
+
+    // FIXME: Missing collapse?
   }
 
   /**
@@ -1360,8 +1374,8 @@ export class SelectionController extends EventTarget {
     paragraphToBeRemoved.remove();
     const nextInline = nextParagraph.firstChild;
     const nextOffset = this.focusOffset;
-    this.collapse(nextInline.firstChild, nextOffset);
     this.#mutations.remove(paragraphToBeRemoved);
+    return this.collapse(nextInline.firstChild, nextOffset);
   }
 
   /**
@@ -1390,69 +1404,157 @@ export class SelectionController extends EventTarget {
 
   /**
    * Removes the selected content.
+   *
+   * @param {RemoveSelectedOptions} [options]
    */
-  removeSelected() {
+  removeSelected(options) {
     const affectedInlines = new Set();
     const affectedParagraphs = new Set();
 
+    const focusNode = this.#selection.focusNode;
+    const focusOffset = this.#selection.focusOffset;
+    const anchorNode = this.#selection.anchorNode;
+    const anchorOffset = this.#selection.anchorOffset;
+
     const startNode = getClosestTextNode(this.#range.startContainer);
     const endNode = getClosestTextNode(this.#range.endContainer);
+    const startOffset = this.#range.startOffset;
+    const endOffset = this.#range.endOffset;
 
     let previousNode = null;
-    if (startNode !== endNode) {
+    let nextNode = null;
+
+    // This is the simplest case, when the startNode and the endNode
+    // are the same and they're a textNode.
+    if (startNode === endNode) {
       this.#textNodeIterator.currentNode = startNode;
       previousNode = this.#textNodeIterator.previousNode();
 
       this.#textNodeIterator.currentNode = startNode;
+      nextNode = this.#textNodeIterator.nextNode();
 
-      SafeGuard.start();
-      do {
-        SafeGuard.update();
-
-        const inline = getInline(this.#textNodeIterator.currentNode);
-        const paragraph = getParagraph(this.#textNodeIterator.currentNode);
-
-        affectedInlines.add(inline);
-        affectedParagraphs.add(paragraph);
-
-        this.#textNodeIterator.nextNode();
-      } while (this.#textNodeIterator.currentNode !== endNode);
-    } else {
       const inline = getInline(startNode);
       const paragraph = getParagraph(startNode);
       affectedInlines.add(inline);
       affectedParagraphs.add(paragraph);
+
+      const newNodeValue = removeSlice(
+        startNode.nodeValue,
+        startOffset,
+        endOffset
+      );
+      if (newNodeValue === "") {
+        const lineBreak = createLineBreak();
+        inline.replaceChildren(lineBreak);
+        return this.collapse(lineBreak, 0);
+      }
+      startNode.nodeValue = newNodeValue;
+      return this.collapse(startNode, startOffset);
     }
 
-    // Deletes range contents.
-    this.#range.deleteContents();
+    // If startNode and endNode are different,
+    // then we should process every text node from
+    // start to end.
 
-    // Removes all the unnecessary elements.
-    this.cleanUp(affectedParagraphs, affectedInlines);
+    // Select initial node.
+    this.#textNodeIterator.currentNode = startNode;
 
-    if (this.#textEditor.numParagraphs === 0) {
-      const emptyParagraph = createEmptyParagraph();
-      this.#textEditor.root.appendChild(emptyParagraph);
-      this.collapse(emptyParagraph.firstChild.firstChild, 0);
-    } else if (this.#textEditor.numParagraphs === 1) {
-      const singleParagraph = this.#textEditor.root.firstChild;
-      if (singleParagraph.children.length === 0) {
-        singleParagraph.appendChild(createEmptyInline());
-      } else if (singleParagraph.children.length === 1) {
-        const singleInline = singleParagraph.firstChild;
-        if (singleInline.children.length === 0) {
-          singleInline.appendChild(createLineBreak());
+    const startInline = getInline(startNode);
+    const startParagraph = getParagraph(startNode);
+    const endInline = getInline(endNode);
+    const endParagraph = getParagraph(endNode);
+
+    SafeGuard.start();
+    do {
+      SafeGuard.update();
+
+      const currentNode = this.#textNodeIterator.currentNode;
+
+      // We retrieve the inline and paragraph of the
+      // current node.
+      const inline = getInline(this.#textNodeIterator.currentNode);
+      const paragraph = getParagraph(this.#textNodeIterator.currentNode);
+
+      let shouldRemoveNodeCompletely = false;
+      if (this.#textNodeIterator.currentNode === startNode) {
+        if (startOffset === 0) {
+          // We should remove this node completely.
+          shouldRemoveNodeCompletely = true;
+        } else {
+          // We should remove this node partially.
+          currentNode.nodeValue = currentNode.nodeValue.slice(0, startOffset);
+        }
+      } else if (this.#textNodeIterator.currentNode === endNode) {
+        if (endOffset === endNode.nodeValue.length) {
+          // We should remove this node completely.
+          shouldRemoveNodeCompletely = true;
+        } else {
+          // We should remove this node partially.
+          currentNode.nodeValue = currentNode.nodeValue.slice(endOffset);
+        }
+      } else {
+        // We should remove this node completely.
+        shouldRemoveNodeCompletely = true;
+      }
+
+      this.#textNodeIterator.nextNode();
+
+      // Realizamos el borrado del nodo actual.
+      if (shouldRemoveNodeCompletely) {
+        currentNode.remove();
+        if (currentNode === startNode) {
+          continue;
+        }
+        if (currentNode === endNode) {
+          break;
+        }
+
+        if (inline.childNodes.length === 0) {
+          inline.remove();
+        }
+        if (paragraph !== startParagraph && paragraph.children.length === 0) {
+          paragraph.remove();
         }
       }
-      this.collapse(singleParagraph.firstChild.firstChild, 0);
+
+      if (currentNode === endNode) {
+        break;
+      }
+
+    } while (this.#textNodeIterator.currentNode);
+
+    if (startParagraph !== endParagraph) {
+      const mergedParagraph = mergeParagraphs(startParagraph, endParagraph);
+      if (mergedParagraph.children.length === 0) {
+        const newEmptyInline = createEmptyInline();
+        mergedParagraph.appendChild(newEmptyInline);
+        return this.collapse(newEmptyInline.firstChild, 0);
+      }
     }
 
-    if (previousNode && isLineBreak(previousNode)) {
-      this.collapse(previousNode, 0);
-    } else if (previousNode && isTextNode(previousNode)) {
-      this.collapse(previousNode, previousNode.nodeValue.length);
+    if (startInline.childNodes.length === 0 && endInline.childNodes.length > 0) {
+      startInline.remove();
+      return this.collapse(endNode, 0);
+    } else if (startInline.childNodes.length > 0 && endInline.childNodes.length === 0) {
+      endInline.remove();
+      return this.collapse(startNode, startOffset);
+    } else if (startInline.childNodes.length === 0 && endInline.childNodes.length === 0) {
+      const previousInline = startInline.previousElementSibling;
+      const nextInline = endInline.nextElementSibling;
+      startInline.remove();
+      endInline.remove();
+      if (previousInline) {
+        return this.collapse(previousInline.firstChild, previousInline.firstChild.nodeValue.length);
+      }
+      if (nextInline) {
+        return this.collapse(nextInline.firstChild, 0);
+      }
+      const newEmptyInline = createEmptyInline();
+      startParagraph.appendChild(newEmptyInline);
+      return this.collapse(newEmptyInline.firstChild, 0);
     }
-    this.#range.collapse();
+
+    return this.collapse(startNode, startOffset);
   }
 
   /**
@@ -1496,7 +1598,7 @@ export class SelectionController extends EventTarget {
         }
 
         // FIXME: This can change focus <-> anchor order.
-        this.setBaseAndExtent(midText, 0, midText, midText.nodeValue.length);
+        this.setSelection(midText, 0, midText, midText.nodeValue.length);
 
         // The styles are applied to the paragraph.
       } else {

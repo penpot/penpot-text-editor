@@ -170,7 +170,9 @@ export class TextEditor extends EventTarget {
       "stylechange",
       this.#onStyleChange
     );
-    addEventListeners(this.#element, this.#events);
+    addEventListeners(this.#element, this.#events, {
+      capture: true
+    });
   }
 
   /**
@@ -250,7 +252,8 @@ export class TextEditor extends EventTarget {
    * @param {InputEvent} e
    */
   #onBeforeInput = (e) => {
-    if (e.inputType === "historyUndo" || e.inputType === "historyRedo") {
+    if (e.inputType === "historyUndo"
+     || e.inputType === "historyRedo") {
       return;
     }
 
@@ -262,6 +265,7 @@ export class TextEditor extends EventTarget {
     }
 
     if (e.inputType in commands) {
+      console.log(e.inputType)
       const command = commands[e.inputType];
       this.#selectionController.startMutation();
       command(e, this, this.#selectionController);

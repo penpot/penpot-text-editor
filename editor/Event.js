@@ -11,10 +11,11 @@
  *
  * @param {EventTarget} target
  * @param {Object.<string, Function>} object
+ * @param {EventListenerOptions} [options]
  */
-export function addEventListeners(target, object) {
+export function addEventListeners(target, object, options) {
   Object.entries(object).forEach(([type, listener]) =>
-    target.addEventListener(type, listener)
+    target.addEventListener(type, listener, options)
   );
 }
 

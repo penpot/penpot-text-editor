@@ -19,24 +19,35 @@ export function deleteContentBackward(event, editor, selectionController) {
   event.preventDefault();
   // If the editor is empty this is a no op.
   if (editor.isEmpty) return;
-  // Caret mode (nothing selected)
-  if (selectionController.isCollapsed) {
-    if (
-      selectionController.isTextFocus &&
-      selectionController.focusOffset > 0
-    ) {
-      return selectionController.removeBackwardText();
-    } else if (
-      selectionController.isTextFocus &&
-      selectionController.focusAtStart
-    ) {
-      return selectionController.mergeBackwardParagraph();
-    } else if (
-      selectionController.isInlineFocus ||
-      selectionController.isLineBreakFocus
-    ) {
-      return selectionController.removeBackwardParagraph();
-    }
+
+  // If not is collapsed AKA is a selection, then
+  // we removeSelected.
+  if (!selectionController.isCollapsed) {
+    return selectionController.removeSelected({ direction: 'backward' });
   }
-  return selectionController.removeSelected();
+
+  // If we're in a text node and the offset is
+  // greater than 0 (not at the start of the inline)
+  // we simple remove a character from the text.
+  if (selectionController.isTextFocus && selectionController.focusOffset > 0) {
+    return selectionController.removeBackwardText();
+
+  // If we're in a text node but we're at the end of the
+  // paragraph, we should merge the current paragraph
+  // with the following paragraph.
+  } else if (
+    selectionController.isTextFocus &&
+    selectionController.focusAtStart
+  ) {
+    return selectionController.mergeBackwardParagraph();
+
+  // If we're at an inline or a line break paragraph
+  // and there's more than one paragraph, then we should
+  // remove the next paragraph.
+  } else if (
+    selectionController.isInlineFocus ||
+    selectionController.isLineBreakFocus
+  ) {
+    return selectionController.removeBackwardParagraph();
+  }
 }

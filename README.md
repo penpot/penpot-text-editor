@@ -42,7 +42,8 @@ The text editor divides the content in three elements: `root`, `paragraph` and `
 ```html
 <div data-itype="root">
   <div data-itype="paragraph">
-    <span data-itype="inline">Hello, </span><span data-itype="inline" style="font-weight: bold">World!</span>
+    <span data-itype="inline">Hello, </span>
+    <span data-itype="inline" style="font-weight: bold">World!</span>
   </div>
 </div>
 ```
@@ -71,7 +72,7 @@ flowchart TB
 
 - `editor`: contains everything related to the TextEditor. Where `TextEditor.js` is the main file where all the basic code of the editor is handled. This has been designed so that in the future, when the Web Components API is more stable and has features such as handling selection events within shadow roots we will be able to update this class with little effort.
 - `editor/clipboard`: Event handlers for clipboard events.
-- `editor/commands`: Event handlers for input events.
+- `editor/commands`: Event handlers for input events (commands) that modifies the content of the TextEditor.
 - `editor/content`: Code related to handling elements like text nodes, paragraphs, line breaks, etc. This are a series of utility functions that can perform some verifications and mutations on DOM nodes.
 - `editor/controllers`: There are two controllers; `ChangeController` that handles when a change in the content should be notified and `SelectionController` that handles operations on selections and text, this is where all the mutations on DOM nodes are performed.
 

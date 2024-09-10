@@ -142,8 +142,14 @@ export function getParagraph(node) {
   if (node.nodeType === Node.TEXT_NODE
    || isLineBreak(node)) {
     const paragraph = node?.parentElement?.parentElement;
-    if (!paragraph) return null;
-    if (!isParagraph(paragraph)) return null;
+    if (!paragraph) {
+      console.log("Is null")
+      return null;
+    }
+    if (!isParagraph(paragraph)) {
+      console.log("Not a paragraph");
+      return null;
+    }
     return paragraph;
   }
   return node.closest(QUERY);

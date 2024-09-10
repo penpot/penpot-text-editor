@@ -11,6 +11,11 @@ import "./editor/TextEditor.css";
 import { TextEditor } from "./editor/TextEditor";
 import { SelectionControllerDebug } from "./editor/debug/SelectionControllerDebug";
 
+const searchParams = new URLSearchParams(location.search);
+const debug = searchParams.has("debug")
+  ? searchParams.get("debug").split(",")
+  : [];
+
 const textEditorSelectionImposterElement = document.getElementById(
   "text-editor-selection-imposter"
 );
@@ -77,6 +82,9 @@ const textAlignRightElement = document.getElementById("text-align-right");
 const textAlignJustifyElement = document.getElementById("text-align-justify");
 
 function onDirectionChange(e) {
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   if (e.target.checked) {
     textEditor.applyStylesToSelection({
       "direction": e.target.value
@@ -88,6 +96,9 @@ directionLTRElement.addEventListener("change", onDirectionChange);
 directionRTLElement.addEventListener("change", onDirectionChange);
 
 function onTextAlignChange(e) {
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   if (e.target.checked) {
     textEditor.applyStylesToSelection({
       "text-align": e.target.value
@@ -101,39 +112,54 @@ textAlignRightElement.addEventListener("change", onTextAlignChange);
 textAlignJustifyElement.addEventListener("change", onTextAlignChange);
 
 fontFamilyElement.addEventListener("change", (e) => {
-  console.log(e);
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   textEditor.applyStylesToSelection({
     "font-family": e.target.value,
   });
 });
 
 fontWeightElement.addEventListener("change", (e) => {
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   textEditor.applyStylesToSelection({
     "font-weight": e.target.value,
   });
 });
 
 fontSizeElement.addEventListener("change", (e) => {
-  console.log(e);
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   textEditor.applyStylesToSelection({
     "font-size": e.target.value,
   });
 });
 
 lineHeightElement.addEventListener("change", (e) => {
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   textEditor.applyStylesToSelection({
     "line-height": e.target.value
   })
 })
 
 letterSpacingElement.addEventListener("change", (e) => {
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   textEditor.applyStylesToSelection({
     "letter-spacing": e.target.value
   })
 })
 
 fontStyleElement.addEventListener("change", (e) => {
-  console.log(e);
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   textEditor.applyStylesToSelection({
     "font-style": e.target.value,
   });
@@ -158,12 +184,16 @@ function formatHTML(html, options) {
 
 const outputElement = document.getElementById("output");
 textEditorElement.addEventListener("input", (e) => {
-  console.log(e);
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   outputElement.textContent = formatHTML(textEditor.element.innerHTML);
 });
 
 textEditor.addEventListener("stylechange", (e) => {
-  console.log(e);
+  if (debug.includes("events")) {
+    console.log(e);
+  }
   const fontSize = parseInt(e.detail.getPropertyValue("font-size"), 10);
   const fontWeight = e.detail.getPropertyValue("font-weight");
   const fontStyle = e.detail.getPropertyValue("font-style");

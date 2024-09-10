@@ -18,41 +18,39 @@ export function deleteContentForward(event, editor, selectionController) {
   event.preventDefault();
   // If the editor is empty this is a no op.
   if (editor.isEmpty) return;
-  // Caret mode (no selection or selection is collapsed)
-  if (selectionController.isCollapsed) {
-    // If we're in a text node and the offset is
-    // greater than 0 (not at the start of the inline)
-    // we simple remove a character from the text.
-    if (
-      selectionController.isTextFocus &&
-      selectionController.focusOffset >= 0
-    ) {
-      return selectionController.removeForwardText();
 
-    // If we're in a text node but we're at the end of the
-    // paragraph, we should merge the current paragraph
-    // with the following paragraph.
-    } else if (
-      selectionController.isTextFocus &&
-      selectionController.focusAtEnd
-    ) {
-      return selectionController.mergeForwardParagraph();
-
-    // If we're at an inline or a line break paragraph
-    // and there's more than one paragraph, then we should
-    // remove the next paragraph.
-    } else if (
-      (selectionController.isInlineFocus ||
-        selectionController.isLineBreakFocus) &&
-      editor.numParagraphs > 1
-    ) {
-      return selectionController.removeForwardParagraph();
-    }
-
-    // When there's only one paragraph, and only one
-    // inline and there's no content, we simply should
-    // return.
-    return // NO OP
+  // If not is collapsed AKA is a selection, then
+  // we removeSelected.
+  if (!selectionController.isCollapsed) {
+    return selectionController.removeSelected({ direction: "forward" });
   }
-  return selectionController.removeSelected();
+
+  // If we're in a text node and the offset is
+  // greater than 0 (not at the start of the inline)
+  // we simple remove a character from the text.
+  if (
+    selectionController.isTextFocus &&
+    selectionController.focusOffset >= 0
+  ) {
+    return selectionController.removeForwardText();
+
+  // If we're in a text node but we're at the end of the
+  // paragraph, we should merge the current paragraph
+  // with the following paragraph.
+  } else if (
+    selectionController.isTextFocus &&
+    selectionController.focusAtEnd
+  ) {
+    return selectionController.mergeForwardParagraph();
+
+  // If we're at an inline or a line break paragraph
+  // and there's more than one paragraph, then we should
+  // remove the next paragraph.
+  } else if (
+    (selectionController.isInlineFocus ||
+      selectionController.isLineBreakFocus) &&
+    editor.numParagraphs > 1
+  ) {
+    return selectionController.removeForwardParagraph();
+  }
 }

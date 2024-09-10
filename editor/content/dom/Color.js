@@ -1,4 +1,33 @@
 /**
+ * Canvas used to retrieve colors as CSS hexadecimals.
+ *
+ * @type {OffscreenCanvas|HTMLCanvasElement}
+ */
+let canvas = null; // createCanvas(1, 1);
+
+/**
+ * Context used to retrieve colors as CSS hexadecimals.
+ *
+ * @type {CanvasRenderingContext2D}
+ */
+let context = null; // canvas.getContext("2d");
+
+/**
+ * Returns the canvas context.
+ *
+ * @returns {CanvasRenderingContext2D}
+ */
+function getContext() {
+  if (!canvas) {
+    canvas = createCanvas(1, 1);
+  }
+  if (!context) {
+    context = canvas.getContext("2d");
+  }
+  return context
+}
+
+/**
  * Creates a new canvas element.
  *
  * @param {number} width
@@ -11,20 +40,6 @@ function createCanvas(width, height) {
   }
   return document.createElement("canvas");
 }
-
-/**
- * Canvas used to retrieve colors as CSS hexadecimals.
- *
- * @type {OffscreenCanvas|HTMLCanvasElement}
- */
-const canvas = createCanvas(1, 1);
-
-/**
- * Context used to retrieve colors as CSS hexadecimals.
- *
- * @type {CanvasRenderingContext2D}
- */
-const context = canvas.getContext("2d");
 
 /**
  * Returns a byte representation as an hex.
@@ -43,6 +58,7 @@ export function getByteAsHex(byte) {
  * @returns {[string, number]}
  */
 export function getColor(fillStyle) {
+  const context = getContext();
   context.fillStyle = fillStyle;
   context.fillRect(0, 0, 1, 1);
   const imageData = context.getImageData(0, 0, 1, 1);

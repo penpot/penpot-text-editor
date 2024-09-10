@@ -87,3 +87,18 @@ export function removeForward(str, offset) {
   tryOffset(offset);
   return str.slice(0, offset) + str.slice(offset + 1);
 }
+
+/**
+ * Removes a slice of text.
+ *
+ * @param {string} str
+ * @param {number} start
+ * @param {number} end
+ * @returns {string}
+ */
+export function removeSlice(str, start, end) {
+  tryString(str);
+  tryOffset(start);
+  tryOffset(end);
+  return str.slice(0, start) + str.slice(end);
+}
