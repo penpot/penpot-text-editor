@@ -30,7 +30,7 @@ describe('TextEditor', () => {
         textEditor.createInlineFromString('Hello, World!')
       ]),
       textEditor.createParagraph([
-        textEditor.createInlineFromString('\n')
+        textEditor.createInlineFromString('')
       ]),
       textEditor.createParagraph([
         textEditor.createInlineFromString('¡Hola, Mundo!')

@@ -404,7 +404,7 @@ export class TextEditor extends EventTarget {
    * @returns {HTMLSpanElement}
    */
   createInlineFromString(text, styles) {
-    if (text === "\n") {
+    if (text === "") {
       return createEmptyInline(styles);
     }
     return createInline(new Text(text), styles);
