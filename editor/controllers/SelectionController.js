@@ -1408,13 +1408,10 @@ export class SelectionController extends EventTarget {
    * @param {RemoveSelectedOptions} [options]
    */
   removeSelected(options) {
+    if (this.isCollapsed) return;
+
     const affectedInlines = new Set();
     const affectedParagraphs = new Set();
-
-    const focusNode = this.#selection.focusNode;
-    const focusOffset = this.#selection.focusOffset;
-    const anchorNode = this.#selection.anchorNode;
-    const anchorOffset = this.#selection.anchorOffset;
 
     const startNode = getClosestTextNode(this.#range.startContainer);
     const endNode = getClosestTextNode(this.#range.endContainer);
@@ -1485,7 +1482,9 @@ export class SelectionController extends EventTarget {
           currentNode.nodeValue = currentNode.nodeValue.slice(0, startOffset);
         }
       } else if (this.#textNodeIterator.currentNode === endNode) {
-        if (endOffset === endNode.nodeValue.length) {
+        if (isLineBreak(endNode)
+         || (isTextNode(endNode)
+          && endOffset === endNode.nodeValue.length)) {
           // We should remove this node completely.
           shouldRemoveNodeCompletely = true;
         } else {
@@ -1526,7 +1525,7 @@ export class SelectionController extends EventTarget {
     if (startParagraph !== endParagraph) {
       const mergedParagraph = mergeParagraphs(startParagraph, endParagraph);
       if (mergedParagraph.children.length === 0) {
-        const newEmptyInline = createEmptyInline();
+        const newEmptyInline = createEmptyInline(this.#currentStyle);
         mergedParagraph.appendChild(newEmptyInline);
         return this.collapse(newEmptyInline.firstChild, 0);
       }
@@ -1549,7 +1548,7 @@ export class SelectionController extends EventTarget {
       if (nextInline) {
         return this.collapse(nextInline.firstChild, 0);
       }
-      const newEmptyInline = createEmptyInline();
+      const newEmptyInline = createEmptyInline(this.#currentStyle);
       startParagraph.appendChild(newEmptyInline);
       return this.collapse(newEmptyInline.firstChild, 0);
     }

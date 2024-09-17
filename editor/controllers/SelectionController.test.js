@@ -857,6 +857,166 @@ describe("SelectionController", () => {
     ).toBe("Hello, World!");
   });
 
+  test("`removeSelected` and `removeForwardParagraph`", () => {
+    const textEditorMock = TextEditorMock.createTextEditorMockWithParagraphs([
+      createParagraph([createInline(new Text("Hello, World!"))]),
+      createParagraph([createInline(createLineBreak())]),
+      createParagraph([createInline(new Text("This is a test"))]),
+    ]);
+    const root = textEditorMock.root;
+    const selection = document.getSelection();
+    const selectionController = new SelectionController(
+      textEditorMock,
+      selection
+    );
+    focus(
+      selection,
+      textEditorMock,
+      root.firstElementChild.firstElementChild.firstChild, // This is a test text
+      0,
+      root.firstElementChild.firstElementChild.firstChild,
+      "Hello, World!".length
+    );
+    selectionController.removeSelected();
+    selectionController.removeForwardParagraph();
+    expect(textEditorMock.root).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.children).toHaveLength(2);
+    expect(textEditorMock.root.dataset.itype).toBe("root");
+    expect(textEditorMock.root.firstChild).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.firstChild.children).toHaveLength(1);
+    expect(textEditorMock.root.firstChild.dataset.itype).toBe("paragraph");
+    expect(textEditorMock.root.firstChild.firstChild).toBeInstanceOf(
+      HTMLSpanElement
+    );
+    expect(textEditorMock.root.firstChild.firstChild.dataset.itype).toBe(
+      "inline"
+    );
+    expect(textEditorMock.root.textContent).toBe("This is a test");
+    expect(textEditorMock.root.firstChild.firstChild.firstChild).toBeInstanceOf(
+      HTMLBRElement
+    );
+    expect(textEditorMock.root.lastChild.firstChild.firstChild.nodeValue).toBe(
+      "This is a test"
+    );
+  });
+
+  test("performing a `removeSelected` after a `removeSelected` should do nothing", () => {
+    const textEditorMock = TextEditorMock.createTextEditorMockWithParagraphs([
+      createParagraph([createInline(new Text("Hello, World!"))]),
+      createParagraph([createInline(createLineBreak())]),
+      createParagraph([createInline(new Text("This is a test"))]),
+    ]);
+    const root = textEditorMock.root;
+    const selection = document.getSelection();
+    const selectionController = new SelectionController(
+      textEditorMock,
+      selection
+    );
+    focus(
+      selection,
+      textEditorMock,
+      root.firstElementChild.firstElementChild.firstChild, // This is a test text
+      0,
+      root.firstElementChild.firstElementChild.firstChild,
+      "Hello, World!".length
+    );
+    selectionController.removeSelected();
+
+    // This should do nothing.
+    selectionController.removeSelected();
+
+    expect(textEditorMock.root).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.children).toHaveLength(3);
+    expect(textEditorMock.root.dataset.itype).toBe("root");
+    expect(textEditorMock.root.firstChild).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.firstChild.children).toHaveLength(1);
+    expect(textEditorMock.root.firstChild.dataset.itype).toBe("paragraph");
+    expect(textEditorMock.root.firstChild.firstChild).toBeInstanceOf(
+      HTMLSpanElement
+    );
+    expect(textEditorMock.root.firstChild.firstChild.dataset.itype).toBe(
+      "inline"
+    );
+    expect(textEditorMock.root.textContent).toBe("This is a test");
+    expect(textEditorMock.root.firstChild.firstChild.firstChild).toBeInstanceOf(
+      HTMLBRElement
+    );
+    expect(textEditorMock.root.lastChild.firstChild.firstChild.nodeValue).toBe(
+      "This is a test"
+    );
+  });
+
+  test("`removeSelected` removes everything", () => {
+    const textEditorMock = TextEditorMock.createTextEditorMockWithParagraphs([
+      createParagraph([createInline(new Text("Hello, World!"))]),
+      createParagraph([createInline(createLineBreak())]),
+      createParagraph([createInline(new Text("This is a test"))]),
+    ]);
+    const root = textEditorMock.root;
+    const selection = document.getSelection();
+    const selectionController = new SelectionController(
+      textEditorMock,
+      selection
+    );
+    focus(
+      selection,
+      textEditorMock,
+      root.firstElementChild.firstElementChild.firstChild, // This is a test text
+      0,
+      root.lastElementChild.firstElementChild.firstChild,
+      "This is a test".length
+    );
+    selectionController.removeSelected();
+    expect(textEditorMock.root).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.children).toHaveLength(1);
+    expect(textEditorMock.root.dataset.itype).toBe("root");
+    expect(textEditorMock.root.firstChild).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.firstChild.children).toHaveLength(1);
+    expect(textEditorMock.root.firstChild.dataset.itype).toBe("paragraph");
+    expect(textEditorMock.root.textContent).toBe("");
+    expect(textEditorMock.root.firstChild.firstChild.firstChild).toBeInstanceOf(
+      HTMLBRElement
+    );
+  });
+
+  test("`removeSelected` removes everything and insert text", () => {
+    const textEditorMock = TextEditorMock.createTextEditorMockWithParagraphs([
+      createParagraph([createInline(new Text("Hello, World!"))]),
+      createParagraph([createInline(createLineBreak())]),
+      createParagraph([createInline(new Text("This is a test"))]),
+    ]);
+    const root = textEditorMock.root;
+    const selection = document.getSelection();
+    const selectionController = new SelectionController(
+      textEditorMock,
+      selection
+    );
+    focus(
+      selection,
+      textEditorMock,
+      root.firstElementChild.firstElementChild.firstChild, // This is a test text
+      0,
+      root.lastElementChild.firstElementChild.firstChild,
+      "This is a test".length
+    );
+    selectionController.removeSelected();
+    console.log(root.outerHTML);
+    selectionController.replaceLineBreak("Hello, World!");
+    expect(textEditorMock.root).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.children).toHaveLength(1);
+    expect(textEditorMock.root.dataset.itype).toBe("root");
+    expect(textEditorMock.root.firstChild).toBeInstanceOf(HTMLDivElement);
+    expect(textEditorMock.root.firstChild.children).toHaveLength(1);
+    expect(textEditorMock.root.firstChild.dataset.itype).toBe("paragraph");
+    expect(textEditorMock.root.textContent).toBe("Hello, World!");
+    expect(textEditorMock.root.firstChild.firstChild.firstChild).toBeInstanceOf(
+      Text
+    );
+    expect(textEditorMock.root.firstChild.firstChild.firstChild.nodeValue).toBe(
+      "Hello, World!"
+    );
+  });
+
   test('`applyStyles` to text', () => {
     const textEditorMock = TextEditorMock.createTextEditorMockWithText("Hello, World!");
     const root = textEditorMock.root;
