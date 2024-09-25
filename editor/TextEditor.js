@@ -266,7 +266,9 @@ export class TextEditor extends EventTarget {
 
     if (e.inputType in commands) {
       const command = commands[e.inputType];
-      this.#selectionController.startMutation();
+      if (!this.#selectionController.startMutation())
+        return;
+
       command(e, this, this.#selectionController);
       const mutations = this.#selectionController.endMutation();
       this.#notifyLayout(LayoutType.FULL, mutations);

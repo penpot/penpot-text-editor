@@ -453,6 +453,8 @@ export class SelectionController extends EventTarget {
    */
   startMutation() {
     this.#mutations.clear();
+    if (!this.#focusNode) return false;
+    return true;
   }
 
   /**
