@@ -16,9 +16,6 @@
  */
 export function insertText(event, editor, selectionController) {
   event.preventDefault();
-  if (! selectionController.focusNode) {
-    return null;
-  }
   if (selectionController.isCollapsed) {
     if (selectionController.isTextFocus) {
       return selectionController.insertText(event.data);
