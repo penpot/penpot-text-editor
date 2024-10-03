@@ -505,7 +505,7 @@ export function getCurrentStyle(instance) {
   }
 }
 
-export function applyStylesToSelection(instance, style) {
+export function applyStylesToSelection(instance, styles) {
   if (isEditor(instance)) {
     return instance.applyStylesToSelection(styles);
   }
