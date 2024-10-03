@@ -474,4 +474,47 @@ export class TextEditor extends EventTarget {
   }
 }
 
+export function isEditor(instance) {
+  return (instance instanceof TextEditor);
+}
+
+/* Convenience function based API for Text Editor */
+export function getRoot(instance) {
+  if (isEditor(instance)) {
+    return instance.root;
+  } else {
+    return null;
+  }
+}
+
+export function setRoot(instance, root) {
+  if (isEditor(instance)) {
+    instance.root = root;
+  }
+
+  return instance;
+}
+
+export function create(element, options) {
+  return new TextEditor(element, {...options});
+}
+
+export function getCurrentStyle(instance) {
+  if (isEditor(instance)) {
+    return instance.currentStyle;
+  }
+}
+
+export function applyStylesToSelection(instance, style) {
+  if (isEditor(instance)) {
+    return instance.applyStylesToSelection(styles);
+  }
+}
+
+export function dispose(instance) {
+  if (isEditor(instance)) {
+    instance.dispose();
+  }
+}
+
 export default TextEditor;

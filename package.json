@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/fix.js",
+    "build": "vite build",
     "build:update": "vite build && node scripts/fix-update.js",
     "preview": "vite preview",
     "coverage": "vitest run --coverage",
