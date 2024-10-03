@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/fix.js",
+    "build": "vite build",
     "build:update": "vite build && node scripts/fix-update.js",
     "preview": "vite preview",
     "coverage": "vitest run --coverage",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:e2e": "vitest --browser"
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:watch:ui": "vitest --ui",
+    "test:watch:e2e": "vitest --browser"
   },
   "devDependencies": {
     "@playwright/test": "^1.45.1",
