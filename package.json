@@ -3,10 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "module": "dist/TextEditor.mjs",
   "scripts": {
     "dev": "vite",
     "build": "./scripts/build.sh",
-    "build:update": "./scripts/build.sh && scripts/update.sh",
     "preview": "vite preview",
     "coverage": "vitest run --coverage",
     "test": "vitest --run",
@@ -26,5 +26,5 @@
     "vite": "^5.3.1",
     "vitest": "^1.6.0"
   },
-  "packageManager": "yarn@4.2.2"
+  "packageManager": "yarn@4.3.1"
 }
