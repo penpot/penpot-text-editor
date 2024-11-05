@@ -1,9 +1,9 @@
 {
-  "name": "text-editor",
+  "name": "@penpot/text-editor",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "module": "dist/TextEditor.mjs",
+  "main": "dist/TextEditor.mjs",
   "scripts": {
     "dev": "vite",
     "build": "./scripts/build.sh",
