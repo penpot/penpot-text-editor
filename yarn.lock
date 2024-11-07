@@ -506,6 +506,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@penpot/text-editor@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@penpot/text-editor@workspace:."
+  dependencies:
+    "@playwright/test": "npm:^1.45.1"
+    "@types/node": "npm:^20.14.10"
+    "@vitest/browser": "npm:^1.6.0"
+    "@vitest/coverage-v8": "npm:^1.6.0"
+    "@vitest/ui": "npm:^1.6.0"
+    esbuild: "npm:^0.24.0"
+    jsdom: "npm:^25.0.0"
+    playwright: "npm:^1.45.1"
+    vite: "npm:^5.3.1"
+    vitest: "npm:^1.6.0"
+  languageName: unknown
+  linkType: soft
+
 "@pkgjs/parseargs@npm:^0.11.0":
   version: 0.11.0
   resolution: "@pkgjs/parseargs@npm:0.11.0"
@@ -2679,23 +2696,6 @@ __metadata:
   checksum: 10c0/019d33d81adff3f9f1bfcff18125fb2d3c65564f437d9be539270ee74b994986abb8260c7c2ce90e8f30162178b09dbbce33c6389273afac4f36069c48521f57
   languageName: node
   linkType: hard
-
-"text-editor@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "text-editor@workspace:."
-  dependencies:
-    "@playwright/test": "npm:^1.45.1"
-    "@types/node": "npm:^20.14.10"
-    "@vitest/browser": "npm:^1.6.0"
-    "@vitest/coverage-v8": "npm:^1.6.0"
-    "@vitest/ui": "npm:^1.6.0"
-    esbuild: "npm:^0.24.0"
-    jsdom: "npm:^25.0.0"
-    playwright: "npm:^1.45.1"
-    vite: "npm:^5.3.1"
-    vitest: "npm:^1.6.0"
-  languageName: unknown
-  linkType: soft
 
 "tinybench@npm:^2.5.1":
   version: 2.8.0

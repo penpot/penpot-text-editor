@@ -1151,6 +1151,28 @@ export class SelectionController extends EventTarget {
   }
 
   /**
+   * Replaces the currently focus element
+   * with some text.
+   *
+   * @param {string} newText
+   */
+  insertIntoFocus(newText) {
+    if (this.isTextFocus) {
+      this.focusNode.nodeValue = insertInto(
+        this.focusNode.nodeValue,
+        this.focusOffset,
+        newText
+      );
+    } else if (this.isLineBreakFocus) {
+      const textNode = new Text(newText);
+      this.focusNode.replaceWith(textNode);
+      this.collapse(textNode, newText.length);
+    } else {
+      throw new Error('Unknown node type');
+    }
+  }
+
+  /**
    * Replaces currently selected text.
    *
    * @param {string} newText
@@ -1158,12 +1180,18 @@ export class SelectionController extends EventTarget {
   replaceText(newText) {
     const startOffset = Math.min(this.anchorOffset, this.focusOffset);
     const endOffset = Math.max(this.anchorOffset, this.focusOffset);
-    this.focusNode.nodeValue = replaceWith(
-      this.focusNode.nodeValue,
-      startOffset,
-      endOffset,
-      newText
-    );
+    if (this.isTextFocus) {
+      this.focusNode.nodeValue = replaceWith(
+        this.focusNode.nodeValue,
+        startOffset,
+        endOffset,
+        newText
+      );
+    } else if (this.isLineBreakFocus) {
+      this.focusNode.replaceWith(new Text(newText));
+    } else {
+      throw new Error('Unknown node type');
+    }
     this.#mutations.update(this.focusInline);
     return this.collapse(this.focusNode, startOffset + newText.length);
   }
@@ -1192,12 +1220,15 @@ export class SelectionController extends EventTarget {
     }
 
     this.removeSelected();
+    this.insertIntoFocus(newText);
 
+    /*
     this.focusNode.nodeValue = insertInto(
       this.focusNode.nodeValue,
       this.focusOffset,
       newText
     );
+    */
 
     // FIXME: I'm not sure if we should merge inlines when they share the same styles.
     // For example: if we have > 2 inlines and the start inline and the end inline
@@ -1215,18 +1246,21 @@ export class SelectionController extends EventTarget {
     const currentParagraph = this.focusParagraph;
 
     this.removeSelected();
-
-    this.focusNode.nodeValue = insertInto(
-      this.focusNode.nodeValue,
-      this.focusOffset,
-      newText
-    );
+    this.insertIntoFocus(newText);
 
     for (const child of currentParagraph.children) {
       if (child.textContent === "") {
         child.remove();
       }
     }
+
+    /*
+    this.focusNode.nodeValue = insertInto(
+      this.focusNode.nodeValue,
+      this.focusOffset,
+      newText
+    );
+    */
   }
 
   /**
