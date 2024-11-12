@@ -8,6 +8,8 @@
 
 import { getFills } from "./Color";
 
+const DEFAULT_FONT_SIZE = "16px";
+
 /**
  * Merges two style declarations. `source` -> `target`.
  *
@@ -81,6 +83,11 @@ export function normalizeStyles(styleDeclaration) {
   const fontId = styleDeclaration.getPropertyPriority("--font-id");
   if (fontFamily && !fontId) {
     styleDeclaration.removeProperty("font-family");
+  }
+
+  const fontSize = styleDeclaration.getPropertyValue("font-size")
+  if (!fontSize || fontSize === "0px") {
+    styleDeclaration.setProperty("font-size", DEFAULT_FONT_SIZE)
   }
   return styleDeclaration
 }
