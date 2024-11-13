@@ -17,11 +17,12 @@ import {
   isLikeInline,
   getInline,
   getInlinesFrom,
+  createInline,
   createEmptyInline,
   isInlineEnd,
   splitInline,
 } from "./Inline";
-import { isLineBreak } from "./LineBreak";
+import { createLineBreak, isLineBreak } from "./LineBreak";
 import { setStyles } from "./Style";
 import { createRandomId } from "./Element";
 import { isEmptyTextNode, isTextNode } from './TextNode';
@@ -47,6 +48,24 @@ export const STYLES = [
   ["text-align"],
   ["direction"]
 ];
+
+/**
+ * FIXME: This is a fix for Chrome that removes the
+ * current inline when the last character is deleted
+ * in `insertCompositionText`.
+ *
+ * @param {*} node
+ */
+export function fixParagraph(node) {
+  if  (!isParagraph(node) || !isLineBreak(node.firstChild)) {
+    return;
+  }
+  const br = createLineBreak();
+  node.replaceChildren(
+    createInline(br)
+  );
+  return br;
+}
 
 /**
  * Returns true if the passed node behaves like a paragraph.

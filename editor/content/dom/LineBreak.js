@@ -24,5 +24,5 @@ export function createLineBreak() {
  * @returns {boolean}
  */
 export function isLineBreak(node) {
-  return node.nodeType === Node.ELEMENT_NODE && node.nodeName === TAG;
+  return node && node.nodeType === Node.ELEMENT_NODE && node.nodeName === TAG;
 }

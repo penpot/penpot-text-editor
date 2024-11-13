@@ -13,7 +13,7 @@ import SelectionController from './controllers/SelectionController.js';
 import { createSelectionImposterFromClientRects } from './selection/Imposter.js';
 import { addEventListeners, removeEventListeners } from "./Event";
 import { createRoot, createEmptyRoot } from './content/dom/Root.js';
-import { createParagraph } from './content/dom/Paragraph.js';
+import { createParagraph, fixParagraph, getParagraph } from './content/dom/Paragraph.js';
 import { createEmptyInline, createInline } from './content/dom/Inline.js';
 import { isLineBreak } from './content/dom/LineBreak.js';
 import LayoutType from './layout/LayoutType.js';
@@ -70,6 +70,14 @@ export class TextEditor extends EventTarget {
    * @type {Object.<string, *>}
    */
   #styleDefaults = null;
+
+  /**
+   * FIXME: There is a weird case where the events
+   * `beforeinput` and `input` have different `data` when
+   * characters are deleted when the input type is
+   * `insertCompositionText`.
+   */
+  #fixInsertCompositionText = false;
 
   /**
    * Constructor.
@@ -171,7 +179,7 @@ export class TextEditor extends EventTarget {
       this.#onStyleChange
     );
     addEventListeners(this.#element, this.#events, {
-      capture: true
+      capture: true,
     });
   }
 
@@ -252,8 +260,13 @@ export class TextEditor extends EventTarget {
    * @param {InputEvent} e
    */
   #onBeforeInput = (e) => {
-    if (e.inputType === "historyUndo"
-     || e.inputType === "historyRedo") {
+    if (e.inputType === "historyUndo" || e.inputType === "historyRedo") {
+      return;
+    }
+
+    if (e.inputType === "insertCompositionText" && !e.data) {
+      e.preventDefault();
+      this.#fixInsertCompositionText = true;
       return;
     }
 
@@ -266,9 +279,9 @@ export class TextEditor extends EventTarget {
 
     if (e.inputType in commands) {
       const command = commands[e.inputType];
-      if (!this.#selectionController.startMutation())
+      if (!this.#selectionController.startMutation()) {
         return;
-
+      }
       command(e, this, this.#selectionController);
       const mutations = this.#selectionController.endMutation();
       this.#notifyLayout(LayoutType.FULL, mutations);
@@ -285,7 +298,16 @@ export class TextEditor extends EventTarget {
       return;
     }
 
-    if (e.inputType === "insertCompositionText") {
+    if (e.inputType === "insertCompositionText" && this.#fixInsertCompositionText) {
+      e.preventDefault();
+      this.#fixInsertCompositionText = false;
+      if (e.data) {
+        this.#selectionController.fixInsertCompositionText();
+      }
+      return;
+    }
+
+    if (e.inputType === "insertCompositionText" && e.data) {
       this.#notifyLayout(LayoutType.FULL, null);
     }
   };

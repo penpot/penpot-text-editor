@@ -31,6 +31,7 @@ import {
   splitParagraph,
   splitParagraphAtNode,
   mergeParagraphs,
+  fixParagraph,
 } from "~/editor/content/dom/Paragraph";
 import {
   removeBackward,
@@ -195,6 +196,11 @@ export class SelectionController extends EventTarget {
   #styleDefaults = null;
 
   /**
+   * Fix for Chrome.
+   */
+  #fixInsertCompositionText = false;
+
+  /**
    * Constructor
    *
    * @param {TextEditor} textEditor
@@ -283,7 +289,9 @@ export class SelectionController extends EventTarget {
   #onSelectionChange = (e) => {
     // If we're outside the contenteditable element, then
     // we return.
-    if (!this.hasFocus) return;
+    if (!this.hasFocus) {
+      return;
+    }
 
     let focusNodeChanges = false;
     let anchorNodeChanges = false;
@@ -329,6 +337,12 @@ export class SelectionController extends EventTarget {
     // to notify that the styles have changed.
     if (focusNodeChanges) {
       this.#notifyStyleChange();
+    }
+
+    if (this.#fixInsertCompositionText) {
+      this.#fixInsertCompositionText = false;
+      const lineBreak = fixParagraph(this.focusNode);
+      this.collapse(lineBreak, 0);
     }
 
     if (this.#debug) {
@@ -1713,6 +1727,13 @@ export class SelectionController extends EventTarget {
       this.endOffset,
       newStyles
     );
+  }
+
+  /**
+   * BROWSER FIXES
+   */
+  fixInsertCompositionText() {
+    this.#fixInsertCompositionText = true;
   }
 }
 

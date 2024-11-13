@@ -1000,7 +1000,6 @@ describe("SelectionController", () => {
       "This is a test".length
     );
     selectionController.removeSelected();
-    console.log(root.outerHTML);
     selectionController.replaceLineBreak("Hello, World!");
     expect(textEditorMock.root).toBeInstanceOf(HTMLDivElement);
     expect(textEditorMock.root.children).toHaveLength(1);
