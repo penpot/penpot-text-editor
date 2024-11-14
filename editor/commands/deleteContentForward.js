@@ -28,24 +28,22 @@ export function deleteContentForward(event, editor, selectionController) {
   // If we're in a text node and the offset is
   // greater than 0 (not at the start of the inline)
   // we simple remove a character from the text.
-  if (
+  if (selectionController.isTextFocus
+   && selectionController.focusAtEnd) {
+    return selectionController.mergeForwardParagraph();
+
+    // If we're at an inline or a line break paragraph
+    // and there's more than one paragraph, then we should
+    // remove the next paragraph.
+  } else if (
     selectionController.isTextFocus &&
     selectionController.focusOffset >= 0
   ) {
     return selectionController.removeForwardText();
 
-  // If we're in a text node but we're at the end of the
-  // paragraph, we should merge the current paragraph
-  // with the following paragraph.
-  } else if (
-    selectionController.isTextFocus &&
-    selectionController.focusAtEnd
-  ) {
-    return selectionController.mergeForwardParagraph();
-
-  // If we're at an inline or a line break paragraph
-  // and there's more than one paragraph, then we should
-  // remove the next paragraph.
+    // If we're in a text node but we're at the end of the
+    // paragraph, we should merge the current paragraph
+    // with the following paragraph.
   } else if (
     (selectionController.isInlineFocus ||
       selectionController.isLineBreakFocus) &&
