@@ -12,7 +12,7 @@ import {
   createParagraph,
   isLikeParagraph,
 } from "./Paragraph";
-import { isDisplayBlock, normalizeStyles, getComputedStyle, mergeStyleDeclarations } from "./Style";
+import { isDisplayBlock, normalizeStyles } from "./Style";
 
 /**
  * Maps any HTML into a valid content DOM element.
@@ -23,31 +23,34 @@ import { isDisplayBlock, normalizeStyles, getComputedStyle, mergeStyleDeclaratio
  * @returns {DocumentFragment}
  */
 export function mapContentFragmentFromDocument(document, root, styleDefaults) {
-  const nodeIterator = document.createNodeIterator(root, NodeFilter.SHOW_TEXT);
+  const nodeIterator = document.createNodeIterator(
+    root,
+    NodeFilter.SHOW_TEXT
+  );
   const fragment = document.createDocumentFragment();
 
   let currentParagraph = null;
   let currentNode = nodeIterator.nextNode();
   while (currentNode) {
     // We cannot call document.defaultView because it is `null`.
-    const parentStyle = normalizeStyles(mergeStyleDeclarations(styleDefaults, getComputedStyle(currentNode.parentElement)));
+    const currentStyle = normalizeStyles(currentNode, styleDefaults);
     if (
       isDisplayBlock(currentNode.parentElement.style) ||
-      isDisplayBlock(parentStyle) ||
+      isDisplayBlock(currentStyle) ||
       isLikeParagraph(currentNode.parentElement)
     ) {
       if (currentParagraph) {
         fragment.appendChild(currentParagraph);
       }
-      currentParagraph = createParagraph(undefined, parentStyle);
+      currentParagraph = createParagraph(undefined, currentStyle);
     } else {
       if (currentParagraph === null) {
-        currentParagraph = createParagraph();
+        currentParagraph = createParagraph(undefined, currentStyle);
       }
     }
 
     currentParagraph.appendChild(
-      createInline(new Text(currentNode.nodeValue), parentStyle)
+      createInline(new Text(currentNode.nodeValue), currentStyle)
     );
 
     currentNode = nodeIterator.nextNode();
@@ -88,7 +91,11 @@ export function mapContentFragmentFromString(string, styleDefaults) {
     if (line === "") {
       fragment.appendChild(createEmptyParagraph(styleDefaults));
     } else {
-      fragment.appendChild(createParagraph([createInline(new Text(line), styleDefaults)], styleDefaults));
+      fragment.appendChild(
+        createParagraph([
+          createInline(new Text(line), styleDefaults)
+        ], styleDefaults)
+      );
     }
   }
   return fragment;

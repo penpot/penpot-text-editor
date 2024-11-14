@@ -9,6 +9,7 @@
 import { getFills } from "./Color";
 
 const DEFAULT_FONT_SIZE = "16px";
+const DEFAULT_LINE_HEIGHT = "1.2";
 
 /**
  * Merges two style declarations. `source` -> `target`.
@@ -28,13 +29,60 @@ export function mergeStyleDeclarations(target, source) {
 }
 
 /**
+ * Resets the properties of a style declaration.
+ *
+ * @param {CSSStyleDeclaration} styleDeclaration
+ * @returns {CSSStyleDeclaration}
+ */
+function resetStyleDeclaration(styleDeclaration) {
+  for (let index = 0; index < styleDeclaration.length; index++) {
+    const styleName = styleDeclaration.item(index);
+    styleDeclaration.removeProperty(styleName);
+  }
+  return styleDeclaration
+}
+
+/**
+ * An inert element that only keeps the style
+ * declaration used for merging other styleDeclarations.
+ *
+ * @type {HTMLDivElement|null}
+ */
+let inertElement = null
+
+/**
+ * Resets the style declaration of the inert
+ * element.
+ */
+function resetInertElement() {
+  if (!inertElement) throw new Error('Invalid inert element');
+  resetStyleDeclaration(inertElement.style);
+  return inertElement;
+}
+
+/**
+ * Returns an instance of a <div> element used
+ * to keep style declarations.
+ *
+ * @returns {HTMLDivElement}
+ */
+function getInertElement() {
+  if (!inertElement) {
+    inertElement = document.createElement("div");
+    return inertElement;
+  }
+  resetInertElement();
+  return inertElement;
+}
+
+/**
  * Computes the styles of an element the same way `window.getComputedStyle` does.
  *
  * @param {Element} element
  * @returns {CSSStyleDeclaration}
  */
 export function getComputedStyle(element) {
-  const inertElement = document.createElement("div");
+  const inertElement = getInertElement();
   let currentElement = element;
   while (currentElement) {
     // This is better but it doesn't work in JSDOM.
@@ -66,14 +114,20 @@ export function getComputedStyle(element) {
  * TODO: I think that this also needs to remove some "conflicting"
  *       CSS properties like `font-family` or some CSS variables.
  *
- * @param {CSSStyleDeclaration} styleDeclaration
+ * @param {Node} node
+ * @param {CSSStyleDeclaration} styleDefaults
  * @returns {CSSStyleDeclaration}
  */
-export function normalizeStyles(styleDeclaration) {
+export function normalizeStyles(node, styleDefaults) {
+  const styleDeclaration = mergeStyleDeclarations(
+    styleDefaults,
+    getComputedStyle(node.parentElement)
+  );
   // If there's a color property, we should convert it to
   // a --fills CSS variable property.
+  const fills = styleDeclaration.getPropertyValue("--fills");
   const color = styleDeclaration.getPropertyValue("color");
-  if (color) {
+  if (color && !fills) {
     styleDeclaration.removeProperty("color");
     styleDeclaration.setProperty("--fills", getFills(color));
   }
@@ -85,9 +139,14 @@ export function normalizeStyles(styleDeclaration) {
     styleDeclaration.removeProperty("font-family");
   }
 
-  const fontSize = styleDeclaration.getPropertyValue("font-size")
+  const fontSize = styleDeclaration.getPropertyValue("font-size");
   if (!fontSize || fontSize === "0px") {
-    styleDeclaration.setProperty("font-size", DEFAULT_FONT_SIZE)
+    styleDeclaration.setProperty("font-size", DEFAULT_FONT_SIZE);
+  }
+
+  const lineHeight = styleDeclaration.getPropertyValue("line-height");
+  if (!lineHeight || lineHeight === "") {
+    styleDeclaration.setProperty("line-height", DEFAULT_LINE_HEIGHT);
   }
   return styleDeclaration
 }
