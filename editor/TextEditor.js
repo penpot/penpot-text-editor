@@ -236,7 +236,10 @@ export class TextEditor extends EventTarget {
    *
    * @param {ClipboardEvent} e
    */
-  #onPaste = (e) => clipboard.paste(e, this, this.#selectionController);
+  #onPaste = (e) => {
+    clipboard.paste(e, this, this.#selectionController);
+    this.#notifyLayout(LayoutType.FULL, null);
+  };
 
   /**
    * Event called when the user cuts some text from the
